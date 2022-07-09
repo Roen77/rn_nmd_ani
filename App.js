@@ -86,6 +86,8 @@ export default function App() {
     toValue: -500,
     tension: 5,
     useNativeDriver: true,
+    restDisplacementThreshold: 100,
+    restSpeedThreshold: 100,
   });
   const goRight = Animated.spring(position, {
     toValue: 500,
@@ -94,14 +96,11 @@ export default function App() {
   });
   const panResponder = useRef(
     PanResponder.create({
-      //터치가 감지되면 active로 전환할거냐??
-      // view에서 터치를 감지할지 결정할수있도록해줌
       onStartShouldSetPanResponder: () => true,
-      //기존위치에서 아래위치를 더하는듯
-      onPanResponderGrant: () => onPressIn.start(),
       onPanResponderMove: (_, {dx}) => {
         position.setValue(dx);
       },
+      onPanResponderGrant: () => onPressIn.start(),
       onPanResponderRelease: (_, {dx}) => {
         if (dx < -250) {
           goLeft.start(onDismiss);
@@ -110,17 +109,6 @@ export default function App() {
         } else {
           Animated.parallel([onPressOut, goCenter]).start();
         }
-        // if (dx < -250) {
-        //   console.log('dismiss to the left');
-        //   Animated.spring(position, {
-        //     toValue: -500,
-        //     useNativeDriver: true,
-        //   }).start();
-        // } else if (dx > 250) {
-        //   goRight.start();
-        // } else {
-        //   Animated.parallel([onPressOut, goCenter]).start();
-        // }
       },
     }),
   ).current;
@@ -129,8 +117,8 @@ export default function App() {
   const [index, setIndex] = useState(0);
   const onDismiss = () => {
     scale.setValue(1);
-    position.setValue(0);
     setIndex(prev => prev + 1);
+    position.setValue(0);
   };
 
   const closePress = () => {
