@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
+
 import {
   Animated,
   Dimensions,
@@ -6,6 +7,8 @@ import {
   PanResponder,
   Pressable,
   TouchableOpacity,
+  View,
+  ViewBase,
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -13,37 +16,32 @@ const Container = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
+  background-color: #00a8ff;
 `;
-//애니메이션 컴포넌트를 만들면서 스타일쓰기 첫번째방법
-// const Box = styled(Animated.createAnimatedComponent(TouchableOpacity))`
-//   background-color: tomato;
-//   width: 200px;
-//   height: 200px;
-// `;
 
-// 두번째방법
-const Box = styled.View`
-  background-color: tomato;
-  width: 200px;
-  height: 200px;
+const Card = styled(Animated.createAnimatedComponent(View))`
+  background-color: white;
+  width: 300px;
+  height: 300px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
 `;
-const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function App() {
-  const POSITION = useRef(
-    new Animated.ValueXY({
-      x: 0,
-      y: 0,
-    }),
-  ).current;
-
-  const borderRadius = POSITION.y.interpolate({
-    inputRange: [-300, 300],
-    outputRange: [100, 0],
-  });
-  const bgColor = POSITION.y.interpolate({
-    inputRange: [-300, 300],
-    outputRange: ['rgb(255, 99, 71)', 'rgb(71, 166, 255)'],
+  const scale = useRef(new Animated.Value(1)).current;
+  const position = useRef(new Animated.Value(0)).current;
+  const onPressIn = () =>
+    Animated.spring(scale, {toValue: 0.95, useNativeDriver: true}).start();
+  // const onPressOut = () =>
+  //   Animated.spring(scale, {
+  //     toValue: 1,
+  //     useNativeDriver: true,
+  //   }).start();
+  const onPressOut = Animated.spring(scale, {
+    toValue: 1,
+    useNativeDriver: true,
   });
 
   const panResponder = useRef(
@@ -52,45 +50,29 @@ export default function App() {
       // view에서 터치를 감지할지 결정할수있도록해줌
       onStartShouldSetPanResponder: () => true,
       //기존위치에서 아래위치를 더하는듯
-      onPanResponderGrant: () => {
-        console.log('Touch Started');
-        //0에서 시작하지말고 다시 이전위치에서 시작해라
-        POSITION.setOffset({
-          x: POSITION.x._value,
-          y: POSITION.y._value,
-        });
-      },
-      onPanResponderMove: (evt, {dx, dy}) => {
-        POSITION.setValue({
-          x: dx,
-          y: dy,
-        });
+      onPanResponderGrant: () => onPressIn(),
+      onPanResponderMove: (_, {dx}) => {
+        position.setValue(dx);
       },
       onPanResponderRelease: () => {
-        console.log('Touch Finished');
-        // offset를 0으로 만들면서 position에 값을 념겨줌
-        POSITION.flattenOffset();
-        // console.log('tocuh 끝남');
-        // Animated.spring(POSITION, {
-        //   toValue: {
-        //     x: 0,
-        //     y: 0,
-        //   },
-        //   bounciness: 20,
-        //   useNativeDriver: false,
-        // }).start();
+        //동시에 진행되는 애니메이션은 아래처럼
+        Animated.parallel([
+          onPressOut,
+          Animated.spring(position, {
+            toValue: 0,
+            useNativeDriver: true,
+          }),
+        ]).start();
       },
     }),
   ).current;
 
   return (
     <Container>
-      <AnimatedBox
+      <Card
         {...panResponder.panHandlers}
         style={{
-          borderRadius,
-          backgroundColor: bgColor,
-          transform: POSITION.getTranslateTransform(),
+          transform: [{scale}, {translateX: position}],
         }}
       />
     </Container>
