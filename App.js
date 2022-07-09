@@ -3,12 +3,11 @@ import {
   Animated,
   Dimensions,
   Easing,
+  PanResponder,
   Pressable,
   TouchableOpacity,
 } from 'react-native';
 import styled from 'styled-components/native';
-
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
 const Container = styled.View`
   flex: 1;
@@ -33,45 +32,11 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 export default function App() {
   const POSITION = useRef(
     new Animated.ValueXY({
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
+      x: 0,
+      y: 0,
     }),
   ).current;
-  const topLeft = Animated.timing(POSITION, {
-    toValue: {
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
-    },
-    useNativeDriver: false,
-  });
-  const bottomLeft = Animated.timing(POSITION, {
-    toValue: {
-      x: -SCREEN_WIDTH / 2 + 100,
-      y: SCREEN_HEIGHT / 2 - 100,
-    },
-    useNativeDriver: false,
-  });
-  const bottomRight = Animated.timing(POSITION, {
-    toValue: {
-      x: SCREEN_WIDTH / 2 - 100,
-      y: SCREEN_HEIGHT / 2 - 100,
-    },
-    useNativeDriver: false,
-  });
-  const topRight = Animated.timing(POSITION, {
-    toValue: {
-      x: SCREEN_WIDTH / 2 - 100,
-      y: -SCREEN_HEIGHT / 2 + 100,
-    },
-    //background color는 false로 해야 먹힘
-    useNativeDriver: false,
-  });
 
-  const moveUp = () => {
-    Animated.loop(
-      Animated.sequence([bottomLeft, bottomRight, topRight, topLeft]),
-    ).start();
-  };
   const borderRadius = POSITION.y.interpolate({
     inputRange: [-300, 300],
     outputRange: [100, 0],
@@ -80,17 +45,42 @@ export default function App() {
     inputRange: [-300, 300],
     outputRange: ['rgb(255, 99, 71)', 'rgb(71, 166, 255)'],
   });
-  console.log('rendering');
+
+  const panResponder = useRef(
+    PanResponder.create({
+      //터치가 감지되면 active로 전환할거냐??
+      // view에서 터치를 감지할지 결정할수있도록해줌
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (evt, {dx, dy}) => {
+        POSITION.setValue({
+          x: dx,
+          y: dy,
+        });
+      },
+      onPanResponderRelease: () => {
+        console.log('tocuh 끝남');
+        Animated.spring(POSITION, {
+          toValue: {
+            x: 0,
+            y: 0,
+          },
+          bounciness: 20,
+          useNativeDriver: false,
+        }).start();
+      },
+    }),
+  ).current;
+
   return (
     <Container>
-      <Pressable onPress={moveUp}>
-        <AnimatedBox
-          style={{
-            backgroundColor: bgColor,
-            transform: [...POSITION.getTranslateTransform()],
-          }}
-        />
-      </Pressable>
+      <AnimatedBox
+        {...panResponder.panHandlers}
+        style={{
+          borderRadius,
+          backgroundColor: bgColor,
+          transform: POSITION.getTranslateTransform(),
+        }}
+      />
     </Container>
   );
 }
