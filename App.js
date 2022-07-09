@@ -12,6 +12,7 @@ import {
   ViewBase,
 } from 'react-native';
 import styled from 'styled-components/native';
+import icon from './icon';
 
 const Container = styled.View`
   flex: 1;
@@ -103,9 +104,9 @@ export default function App() {
       },
       onPanResponderRelease: (_, {dx}) => {
         if (dx < -250) {
-          goLeft.start();
+          goLeft.start(onDismiss);
         } else if (dx > 250) {
-          goRight.start();
+          goRight.start(onDismiss);
         } else {
           Animated.parallel([onPressOut, goCenter]).start();
         }
@@ -124,11 +125,19 @@ export default function App() {
     }),
   ).current;
 
+  //State
+  const [index, setIndex] = useState(0);
+  const onDismiss = () => {
+    scale.setValue(1);
+    position.setValue(0);
+    setIndex(prev => prev + 1);
+  };
+
   const closePress = () => {
-    goLeft.start();
+    goLeft.start(onDismiss);
   };
   const checkPress = () => {
-    goRight.start();
+    goRight.start(onDismiss);
   };
 
   return (
@@ -136,14 +145,16 @@ export default function App() {
       <CardContainer>
         <Card
           // {...panResponder.panHandlers} 여기도 추가하면 무한으로 됨
-          style={{transform: [{scale: secondScale}]}}
-        />
+          style={{transform: [{scale: secondScale}]}}>
+          <Text>{icon[index + 1]}</Text>
+        </Card>
         <Card
           {...panResponder.panHandlers}
           style={{
             transform: [{scale}, {translateX: position}, {rotateZ: rotation}],
-          }}
-        />
+          }}>
+          <Text>{icon[index]}</Text>
+        </Card>
       </CardContainer>
       <BtnContainer>
         <Btn onPress={closePress}>
