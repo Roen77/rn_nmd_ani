@@ -12,6 +12,7 @@ import {
   ViewBase,
 } from 'react-native';
 import styled from 'styled-components/native';
+import icon from './icon';
 
 const BLACK_COLOR = '#1e272e';
 const GREY = '#485460';
@@ -116,13 +117,22 @@ export default function App() {
               easing: Easing.linear,
               useNativeDriver: true,
             }),
-          ]).start();
+          ]).start(nextIcon);
         } else {
           Animated.parallel([onPressOut, goHome]).start();
         }
       },
     }),
   ).current;
+
+  const [index, setIndex] = useState(0);
+  const nextIcon = () => {
+    setIndex(prev => prev + 1);
+    Animated.parallel([
+      Animated.spring(scale, {toValue: 1, useNativeDriver: true}),
+      Animated.spring(opacity, {toValue: 1, useNativeDriver: true}),
+    ]).start();
+  };
 
   return (
     <Container>
@@ -137,7 +147,7 @@ export default function App() {
           style={{
             transform: [...position.getTranslateTransform(), {scale}],
           }}>
-          <Text>피자</Text>
+          <Text>{icon[index]}</Text>
         </IconCard>
       </Center>
       <Edge>
